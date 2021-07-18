@@ -3,10 +3,6 @@
             [land-of-yure.dungeon :refer [generate-dungeon]])
   (:gen-class))
 
-(defn clear-screen [screen]
-  (let [blank (apply str (repeat 120 \space))]
-    (doseq [row (range 64)]
-      (s/put-string screen 0 row blank))))
 
 (defn game-loop
   "Hellos"
