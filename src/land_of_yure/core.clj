@@ -5,7 +5,6 @@
 
 
 (defn game-loop
-  "Hellos"
   [screen]
   ((s/clear screen)
    (generate-dungeon {:screen screen
