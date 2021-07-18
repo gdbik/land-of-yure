@@ -56,7 +56,6 @@
                        :else (- qty 1))
           room-list (cond is-colliding? rooms
                           :else (conj rooms current-room))]
-
       (when (not is-colliding?)
         (print-room {:screen screen
                      :height (:height current-room)
