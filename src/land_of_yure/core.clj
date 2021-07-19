@@ -9,7 +9,7 @@
   ((s/clear screen)
    (generate-dungeon {:screen screen
                       :rooms []
-                      :qty 10})
+                      :qty 5})
    (s/put-string screen 0 0 "Land Of Yure 0.1")
    (s/put-string screen 0 1 "Press any key to generate a new dungeon")
    (s/put-string screen 0 2 "Press ALT-F4/⌘-Q to quit")
