@@ -28,11 +28,11 @@
 (defn generate-room
   [screen]
   (let [
-        height (+ (rand-int 30) 10)
-        width (+ (rand-int 30) 10)
+        height (+ (rand-int 50) 10)
+        width (+ (rand-int 50) 10)
         screen-size (s/get-size screen)
-        x (+ 5 (rand-int (- (get screen-size 0) 20)))
-        y (+ 5 (rand-int (- (get screen-size 1) 20)))]
+        x (+ 5 (rand-int 200))
+        y (+ 5 (rand-int 200))]
     {:height height
      :width width
      :x x
