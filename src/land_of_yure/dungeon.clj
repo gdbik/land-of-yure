@@ -125,9 +125,9 @@
           room-list (cond is-colliding? rooms
                           :else (conj rooms current-room))
           room-center (find-center current-room)]
+      (when (= (count room-list) 1)
+        (reset! player-pos [(:x room-center) (:y room-center)]))
       (when (not is-colliding?)
-        (when (= (count room-list) 1)
-          (reset! player-pos [(:x room-center) (:y room-center)]))
         (add-room {:height (:height current-room)
                    :width (:width current-room)
                    :x (:x current-room)
