@@ -1,5 +1,7 @@
 (ns land-of-yure.dungeon
-  (:require [lanterna.screen :as s]))
+  (:require [lanterna.screen :as s]
+            [land-of-yure.const :refer [MAP_SIZE MAP_ROW MAP_COL WALL_H WALL_V CORRIDOR FLOOR]]
+            [land-of-yure.state :refer [put-tile-on-map! player-pos game-map]]))
 
 (defn collision?
   [{:keys [current-room previous-room]}]
@@ -26,26 +28,35 @@
       (= row (- height 1))))
 
 (defn generate-room
-  [screen]
+  []
   (let [
-        height (+ (rand-int 50) 10)
-        width (+ (rand-int 50) 10)
-        screen-size (s/get-size screen)
-        x (+ 5 (rand-int 200))
-        y (+ 5 (rand-int 200))]
+        height (+ (rand-int 5) 5)
+        width (+ (rand-int 5) 5)
+        x (rand-int (- MAP_COL width))
+        y (+ 3 (rand-int (- MAP_ROW (* height 2))))]        ;; just to be sure we don't go
+                                                            ;; out of bound on the Y axis
     {:height height
      :width width
      :x x
      :y y}))
 
-(defn print-room
-  [{:keys [screen height width x y]}]
+(defn add-element!
+  [{:keys [tile x y]}]
+   (put-tile-on-map! x y tile))
+
+(defn add-room
+  [{:keys [height width x y]}]
   (doseq [row (range (int height))
           col (range width)]
-    (cond
-      (generate-v-walls? row col width height) (s/put-string screen (+ x col) (+ y row) "║")
-      (generate-h-walls? row height) (s/put-string screen (+ x col) (+ y row) "═")
-      :else (s/put-string screen (+ x col) (+ y row) "."))))
+    (let [x-cord (+ x col)
+          y-cord (+ y row)
+          put-tile #(add-element! {:tile %
+                                   :x x-cord
+                                   :y y-cord})]
+      (cond
+        (generate-v-walls? row col width height) (put-tile WALL_V)
+        (generate-h-walls? row height) (put-tile WALL_H)
+        :else (put-tile FLOOR)))))
 
 (defn find-center
   [room]
@@ -56,37 +67,34 @@
       {:x x-center
        :y y-center})))
 
-
 (defn find-centers
   [rooms]
   (mapv #(find-center %) rooms))
 
-
-(defn print-v-corridor
-  [screen c]
+(defn add-v-corridor
+  [c]
   (let [max-y (max (:y-start c) (:y-end c))
-        min-y (min (:y-start c) (:y-end c))]
+        min-y (min (:y-start c) (:y-end c))
+        x (:x-end c)]
     (doseq [y (range min-y max-y)]
-      (s/put-string screen (:x-end c) y "."))))
+      (put-tile-on-map! x y FLOOR))))
 
-(defn print-h-corridor
-  [screen c]
+(defn add-h-corridor
+  [c]
   (let [max-x (max (:x-start c) (:x-end c))
-        min-x (min (:x-start c) (:x-end c))]
+        min-x (min (:x-start c) (:x-end c))
+        y (:y-start c)]
     (doseq [x (range min-x max-x)]
-      (s/put-string screen x (:y-start c) "."))))
+      (put-tile-on-map! x y FLOOR))))
 
+(defn add-c!
+  [c]
+  (add-h-corridor c)
+  (add-v-corridor c))
 
-
-(defn print-c
-  [screen c]
-  (print-h-corridor screen c)
-  (print-v-corridor screen c))
-
-
-(defn print-corridors
-  [{:keys [corridors screen]}]
-  (mapv #(print-c screen %) corridors))
+(defn add-corridors
+  [corridors]
+  (mapv add-c! corridors))
 
 (defn reduce-corridors
   [centers n]
@@ -100,26 +108,35 @@
                                      :y-end (:y next-room)}))
       n)))
 
+(defn print-dungeon
+  [screen]
+  (doseq [y (range MAP_ROW)
+          x (range MAP_COL)]
+    (let [tile (get @game-map (+ (* MAP_COL y) x))]
+      (s/put-string screen x y (str tile)))))
 
 (defn generate-dungeon
   [{:keys [screen qty rooms]}]
   (if (> qty 0)
-    (let [current-room (generate-room screen)
+    (let [current-room (generate-room)
           is-colliding? (are-rooms-colliding? rooms current-room)
           to-gen (cond is-colliding? qty
                        :else (- qty 1))
           room-list (cond is-colliding? rooms
-                          :else (conj rooms current-room))]
+                          :else (conj rooms current-room))
+          room-center (find-center current-room)]
       (when (not is-colliding?)
-        (print-room {:screen screen
-                     :height (:height current-room)
-                     :width (:width current-room)
-                     :x (:x current-room)
-                     :y (:y current-room)}))
+        (when (= (count room-list) 1)
+          (reset! player-pos [(:x room-center) (:y room-center)]))
+        (add-room {:height (:height current-room)
+                   :width (:width current-room)
+                   :x (:x current-room)
+                   :y (:y current-room)}))
       (recur {:screen screen
               :qty to-gen
               :rooms room-list}))
+    ;; else
     (let [rooms-center (find-centers rooms)
           corridors (reduce-corridors rooms-center [])]
-      (print-corridors {:corridors corridors
-                        :screen screen}))))
+      (add-corridors corridors)
+      (print-dungeon screen))))

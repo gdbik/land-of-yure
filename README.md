@@ -5,7 +5,7 @@
 A classic fantasy roguelike in heavy development
 
 ## Features
-- Random rooms generator;
+- Random rooms generation & connection;
 - that's it.
 
 ## Usage
