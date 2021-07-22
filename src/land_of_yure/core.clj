@@ -1,26 +1,16 @@
 (ns land-of-yure.core
   (:require [lanterna.screen :as s]
-            [land-of-yure.const :refer [MAP_SIZE MAP_COL MAP_ROW]]
+            [land-of-yure.const :refer [MAP_SIZE
+                                        MAP_COL
+                                        MAP_ROW
+                                        ROOM_QTY]]
             [land-of-yure.dungeon :refer [generate-dungeon print-dungeon]]
-            [land-of-yure.state :refer [player-pos game-map]])
+            [land-of-yure.state :refer [player-pos
+                                        game-map
+                                        reset-game-map]]
+            [land-of-yure.player :refer [player-movement]])
   (:gen-class))
 
-
-(defn get-k
-  [screen]
-  (let [k (s/get-key-blocking screen)
-        pos @player-pos
-        x-pos (get pos 0)
-        y-pos (get pos 1)
-        go-up (assoc pos 1 (- y-pos 1))
-        go-down (assoc pos 1 (+ y-pos 1))
-        go-left(assoc pos 0 (- x-pos 1))
-        go-right(assoc pos 0 (+ x-pos 1))]
-    (cond
-      (= k \w) (reset! player-pos go-up)
-      (= k \s) (reset! player-pos go-down)
-      (= k \a) (reset! player-pos go-left)
-      (= k \d) (reset! player-pos go-right))))
 
 (defn game-loop
   [screen]
@@ -31,7 +21,7 @@
    (s/put-string screen 0 1 "[action goes here]")
    (s/put-string screen 0 2 "[action goes here]")
    (s/redraw screen)
-   (get-k screen)
+   (player-movement screen)
    (s/clear screen)
    (game-loop screen)))
 
@@ -39,11 +29,11 @@
   [screen-type]
   (let [screen (s/get-screen screen-type {:cols MAP_COL
                                           :rows MAP_ROW
-                                          :font-size 16})]
+                                          :font-size 18})]
     (s/in-screen screen
                  (generate-dungeon {:screen screen
                                     :rooms []
-                                    :qty 5})
+                                    :qty ROOM_QTY})
                  (game-loop screen))))
 
 (defn -main
